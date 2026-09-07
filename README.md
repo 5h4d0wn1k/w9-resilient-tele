@@ -80,15 +80,45 @@ Use this simulation for learning about resilient telemetry design, authorised se
 
 ### Prohibited Use
 
-Do not use the concepts or code from this project to jam, deauth, or otherwise interfere with wireless communications you do not own. Do not deploy HC-12 or similar ISM-band radios without proper licensing. Any use that violates applicable law or regulatory requirements is strictly prohibited.
+Do not use the concepts or code from this project to jam, deauth, or otherwise interfere with wireless communications you do not own. Do not deploy HC-12 or similar ISM-band radios without proper licensing. Do not radiate on 433 MHz or any ISM/Part 15 channel outside a licensed, authorized, shield-attenuated lab. Any use that violates applicable law or regulatory requirements is strictly prohibited.
 
-### No Warranty
+### Regulatory Framework
+- **Federal Communications Act (47 U.S.C. § 333)**: Willful interference with authorized radio communications is prohibited.
+- **47 CFR Part 15**: Radiating intentionally on 433 MHz / 2.4 GHz outside compliance limits is regulated; this repo is a pure simulation and emits nothing.
+- **CFAA (18 U.S.C. § 1030)** and state computer-crime laws apply to interference with or interception of telemetry systems without authorization.
 
-This software is provided "as is" without warranty of any kind. The authors assume no liability for any damage, legal consequences, or harm arising from the use or misuse of this tool or its underlying concepts.
+## Live Lab Test Plan
 
-### Responsible Disclosure
+Offline (this repo, no radio):
+1. `python3 firmware/resilient_tele.py` — run the 49-event embedded timeline through the
+   HC-12 failover state machine + store-and-forward; expect PASS, exit 0.
+2. `python3 firmware/resilient_tele.py --seed 7 --json reports/w9.json`
+   — deterministic metrics (exit 0).
+3. Custom timeline: `{"event":"packet","event":"packet","event":"deauth",...}` as JSON via
+   `--timeline tl.json` (exit 0).
+4. `python3 -m unittest discover -s tests` — byte-exact CRC16/framing tests pass (exit 0).
 
-If you discover vulnerabilities in telemetry systems using the techniques demonstrated here, report them privately to the system owner. Follow coordinated vulnerability disclosure (CVD) best practices.
+Authorized lab (only with written scope + shield + licensed ISM bench):
+5. Wire two HC-12 modules on a licensed/authorized 433 MHz bench to two lab SBCs; run the
+   same event timeline and verify the failover/open+retransmit behavior matches the simulation.
+6. `green = permitted`: simulation only by default; any real 433 MHz radiation must be on an
+   authorized channel with an attenuator and written lab scope.
+
+## Metrics
+
+- Frame model (byte-exact): magic "W9"(2) seq(u16) ts(u32) flags(u8) len(u8) payload CRC16
+  (CCITT-FALSE 0x1021); parse_stream splits concatenated frames
+- Link state machine: PRIMARY -> FAILOVER on deauth/jamming threshold, RECOVERING ->
+  PRIMARY on clean-packet threshold; explicit FAILOVER_TRIGGER/RECOVERY events
+- Store-and-forward: frames lost on primary/recovering are buffered and retransmitted
+  (RETRANS + FAILOVER flags) on failover/recovery
+- Metrics: packets sent/received/lost, overall + attack + post-attack loss %, failover counts,
+  buffered, retransmitted, frames framed vs CRC-verified
+- Deterministic: seeded RNG (default 42); same seed + timeline == same output
+- Offline simulation only; no radio; reports/ gitignored
+
+- Test suite: `python3 -m unittest discover -s tests`
+- Reports: `reports/` (gitignored)
 
 ## License
 
