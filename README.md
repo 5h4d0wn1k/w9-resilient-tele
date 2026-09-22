@@ -1,3 +1,8 @@
+> **⚠️ EDUCATIONAL USE ONLY — AUTHORIZED TESTING ONLY.**
+> This project exists for education, research, and **defense of systems you own
+> or hold explicit written authorization to assess**. Unauthorized use is
+> prohibited and may be illegal. Read [ETHICS.md](ETHICS.md) and
+> [SCOPE.md](SCOPE.md) before use. Use at your own risk; **AS IS**, no warranty.
 # W9 — Attack-resilient dual-band telemetry (HC-12 failover) — w9-resilient-tele
 
 Pure-Python simulation of a dual-band telemetry link with automatic 433 MHz HC-12 failover when the primary Wi-Fi / ESP-NOW link is attacked by deauth storm or jamming.
